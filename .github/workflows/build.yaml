@@ -38,6 +38,7 @@ jobs:
     needs: [ test ]
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - platform: android
@@ -124,6 +125,13 @@ jobs:
           flutter --version
           flutter pub get
 
+      - name: Sync core go modules
+        env:
+          GOFLAGS: -mod=mod
+        run: |
+          cd core
+          go mod tidy
+          go mod download
       - name: Setup
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
