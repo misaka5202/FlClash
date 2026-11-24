@@ -191,6 +191,13 @@ Future<VM2<String, String>> _makeRealProfileTask(
   for (final host in realPatchConfig.hosts.entries) {
     rawConfig['hosts'][host.key] = host.value.splitByMultipleSeparators;
   }
+  // Sheas-Cealer style SNI mimic / cert-MITM (parsed by the mihomo core)
+  if (realPatchConfig.sniMimic.isNotEmpty) {
+    rawConfig['sni-mimic'] = realPatchConfig.sniMimic;
+  }
+  if (realPatchConfig.sniMitm) {
+    rawConfig['sni-mitm'] = true;
+  }
   if (rawConfig['dns'] == null) {
     rawConfig['dns'] = {};
   }

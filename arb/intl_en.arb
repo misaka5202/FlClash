@@ -199,6 +199,8 @@
   "key": "Key",
   "value": "Value",
   "hostsDesc": "Add Hosts",
+  "sniMimicDesc": "Map a blocked domain to a benign SNI (Sheas-style mimic)",
+  "sniMitmDesc": "Re-sign leaf certs so apps need no ignore-certificate-errors",
   "vpnTip": "Changes take effect after restarting the VPN",
   "vpnEnableDesc": "Auto routes all system traffic through VpnService",
   "options": "Options",

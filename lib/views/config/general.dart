@@ -435,6 +435,70 @@ class HostsItem extends ConsumerWidget {
   }
 }
 
+class SniMimicItem extends ConsumerWidget {
+  const SniMimicItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
+    final sniMimic = ref.watch(
+      patchClashConfigProvider.select((state) => state.sniMimic),
+    );
+    return ListItem.open(
+      leading: const Icon(Icons.hidden_outlined),
+      title: const Text('SNI Mimic'),
+      subtitle: Text(appLocalizations.sniMimicDesc),
+      delegate: OpenDelegate(
+        blur: false,
+        widget: MapInputPage(
+          title: 'SNI Mimic',
+          map: sniMimic,
+          keyMaxLength: TextInputLimits.domain,
+          valueMaxLength: TextInputLimits.domain,
+          titleBuilder: (item) => Text(item.key),
+          subtitleBuilder: (item) => Text(item.value),
+        ),
+        onChanged: (value) {
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .update((state) => state.copyWith(sniMimic: value));
+          ref
+              .read(setupActionProvider.notifier)
+              .applyProfileDebounce(force: true);
+        },
+      ),
+    );
+  }
+}
+
+class SniMitmItem extends ConsumerWidget {
+  const SniMitmItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final appLocalizations = context.appLocalizations;
+    final sniMitm = ref.watch(
+      patchClashConfigProvider.select((state) => state.sniMitm),
+    );
+    return ListItem.switchItem(
+      leading: const Icon(Icons.security_outlined),
+      title: const Text('SNI MITM'),
+      subtitle: Text(appLocalizations.sniMitmDesc),
+      delegate: SwitchDelegate(
+        value: sniMitm,
+        onChanged: (bool value) async {
+          ref
+              .read(patchClashConfigProvider.notifier)
+              .update((state) => state.copyWith(sniMitm: value));
+          ref
+              .read(setupActionProvider.notifier)
+              .applyProfileDebounce(force: true);
+        },
+      ),
+    );
+  }
+}
+
 class Ipv6Item extends ConsumerWidget {
   const Ipv6Item({super.key});
 
@@ -668,6 +732,8 @@ final generalItems = <Widget>[
   const TestUrlItem(),
   const PortItem(),
   const HostsItem(),
+  const SniMimicItem(),
+  const SniMitmItem(),
   const Ipv6Item(),
   const AllowLanItem(),
   const UnifiedDelayItem(),

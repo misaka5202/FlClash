@@ -199,6 +199,8 @@
   "key": "键",
   "value": "值",
   "hostsDesc": "追加Hosts",
+  "sniMimicDesc": "将被阻断域名映射为无害SNI（Sheas 式伪造）",
+  "sniMitmDesc": "重签叶子证书，使 App 无需忽略证书错误",
   "vpnTip": "重启VPN后改变生效",
   "vpnEnableDesc": "通过VpnService自动路由系统所有流量",
   "options": "选项",
