@@ -128,6 +128,9 @@ jobs:
           flutter --version
           flutter pub get
 
+      - name: Generate code (UI)
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Sync core go modules
         env:
           GOFLAGS: -mod=mod
