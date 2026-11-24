@@ -440,14 +440,13 @@ class SniMimicItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
     final sniMimic = ref.watch(
       patchClashConfigProvider.select((state) => state.sniMimic),
     );
     return ListItem.open(
-      leading: const Icon(Icons.hidden_outlined),
+      leading: const Icon(Icons.dns_outlined),
       title: const Text('SNI Mimic'),
-      subtitle: Text(appLocalizations.sniMimicDesc),
+      subtitle: const Text('Map a blocked domain to a benign SNI'),
       delegate: OpenDelegate(
         blur: false,
         widget: MapInputPage(
@@ -476,14 +475,13 @@ class SniMitmItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final appLocalizations = context.appLocalizations;
     final sniMitm = ref.watch(
       patchClashConfigProvider.select((state) => state.sniMitm),
     );
     return ListItem.switchItem(
       leading: const Icon(Icons.security_outlined),
       title: const Text('SNI MITM'),
-      subtitle: Text(appLocalizations.sniMitmDesc),
+      subtitle: const Text('Re-sign leaf certs so apps skip cert errors'),
       delegate: SwitchDelegate(
         value: sniMitm,
         onChanged: (bool value) async {
