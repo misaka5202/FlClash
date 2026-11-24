@@ -139,7 +139,26 @@ jobs:
           go mod tidy
           go mod download
       - name: Setup
+        continue-on-error: ${{ matrix.platform == 'windows' }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
+
+      - name: Package portable Windows
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $dir = if ('${{ matrix.arch }}' -eq 'arm64') { 'arm64' } else { 'x64' }
+          $rel = "build/windows/$dir/runner/Release"
+          if (-not (Test-Path $rel)) { Write-Error "release dir missing: $rel"; exit 1 }
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path "$rel/*" -DestinationPath "dist/FlClash-windows-${{ matrix.arch }}-portable.zip" -Force
+
+      - name: Upload portable Windows
+        if: matrix.platform == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-windows-${{ matrix.arch }}
+          path: dist/FlClash-windows-${{ matrix.arch }}-portable.zip
+          overwrite: true
 
       - name: Upload
         uses: actions/upload-artifact@v4
