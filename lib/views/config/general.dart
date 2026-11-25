@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/pages/editor.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
@@ -435,6 +438,49 @@ class HostsItem extends ConsumerWidget {
   }
 }
 
+/// Parses bulk SNI mimic rules from pasted text. Each non-comment line is
+/// "<domain><sep><alias>", where sep may be whitespace, '=', ',' or ':'.
+/// YAML-ish lines such as `"a.com": "b.com"` are accepted too; blank lines and
+/// lines starting with '#' are ignored.
+Map<String, String> parseSniMimicRules(String text) {
+  final rules = <String, String>{};
+  for (final raw in text.split(RegExp(r'\r?\n'))) {
+    var line = raw.trim();
+    if (line.isEmpty || line.startsWith('#')) {
+      continue;
+    }
+    if (line.startsWith('- ')) {
+      line = line.substring(2).trim();
+    }
+    line = line.replaceAll('"', '').replaceAll("'", '').trim();
+    if (line.isEmpty) {
+      continue;
+    }
+    String? domain;
+    String? alias;
+    for (final sep in const [':', '=', ',']) {
+      final i = line.indexOf(sep);
+      if (i > 0 && i < line.length - 1) {
+        domain = line.substring(0, i).trim();
+        alias = line.substring(i + 1).trim();
+        break;
+      }
+    }
+    if (domain == null || alias == null) {
+      final parts = line.split(RegExp(r'\s+'));
+      if (parts.length >= 2) {
+        domain = parts.first;
+        alias = parts.sublist(1).join(' ');
+      }
+    }
+    if (domain == null || alias == null || domain.isEmpty || alias.isEmpty) {
+      continue;
+    }
+    rules[domain] = alias;
+  }
+  return rules;
+}
+
 class SniMimicItem extends ConsumerWidget {
   const SniMimicItem({super.key});
 
@@ -493,6 +539,107 @@ class SniMitmItem extends ConsumerWidget {
               .applyProfileDebounce(force: true);
         },
       ),
+    );
+  }
+}
+
+class SniMimicImportItem extends ConsumerWidget {
+  const SniMimicImportItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final current = ref.watch(
+      patchClashConfigProvider.select((state) => state.sniMimic),
+    );
+    return ListItem.open(
+      leading: const Icon(Icons.playlist_add_outlined),
+      title: const Text('批量导入 SNI 规则'),
+      subtitle: const Text('粘贴多行「域名 别名」，结果合并到现有列表'),
+      delegate: OpenDelegate(
+        blur: false,
+        widget: EditorPage(
+          title: '批量导入 SNI 规则',
+          content: current.entries.map((e) => '${e.key} ${e.value}').join('\n'),
+          onSave: (context, _, content) {
+            final parsed = parseSniMimicRules(content);
+            if (parsed.isEmpty) {
+              context.showSnackBar('未解析到有效规则（格式：域名 别名）');
+              return;
+            }
+            ref.read(patchClashConfigProvider.notifier).update(
+                  (state) => state.copyWith(
+                    sniMimic: {...state.sniMimic, ...parsed},
+                  ),
+                );
+            ref
+                .read(setupActionProvider.notifier)
+                .applyProfileDebounce(force: true);
+            context.showSnackBar('已导入 ${parsed.length} 条规则');
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class SniCertInstallItem extends ConsumerWidget {
+  const SniCertInstallItem({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    return ListItem(
+      leading: const Icon(Icons.verified_user_outlined),
+      title: const Text('安装 SNI MITM 根证书'),
+      subtitle: const Text('装入系统信任库，App 不再提示证书错误'),
+      onTap: () async {
+        final home = await appPath.homeDirPath;
+        final certPath = '$home/sni-mitm/root.crt';
+        if (!await File(certPath).exists()) {
+          if (context.mounted) {
+            context.showSnackBar('证书未生成：请先在 SNI Mimic 中添加规则并应用');
+          }
+          return;
+        }
+        ProcessResult result;
+        try {
+          if (system.isWindows) {
+            result = await Process.run(
+              'certutil',
+              ['-addstore', '-user', 'Root', certPath],
+            );
+          } else if (system.isMacOS) {
+            final homeDir = Platform.environment['HOME'] ?? '';
+            result = await Process.run('security', [
+              'add-trusted-cert',
+              '-d',
+              '-r',
+              'trustRoot',
+              '-k',
+              '$homeDir/Library/Keychains/login.keychain-db',
+              certPath,
+            ]);
+          } else {
+            if (context.mounted) {
+              context.showSnackBar('请手动信任证书：$certPath');
+            }
+            return;
+          }
+        } catch (e) {
+          if (context.mounted) {
+            context.showSnackBar('安装失败：$e');
+          }
+          return;
+        }
+        if (!context.mounted) {
+          return;
+        }
+        context.showSnackBar(
+          result.exitCode == 0
+              ? '根证书已安装，重启浏览器/App 后生效'
+              : '安装失败：${result.stderr}',
+        );
+      },
     );
   }
 }
@@ -731,7 +878,9 @@ final generalItems = <Widget>[
   const PortItem(),
   const HostsItem(),
   const SniMimicItem(),
+  const SniMimicImportItem(),
   const SniMitmItem(),
+  const SniCertInstallItem(),
   const Ipv6Item(),
   const AllowLanItem(),
   const UnifiedDelayItem(),
