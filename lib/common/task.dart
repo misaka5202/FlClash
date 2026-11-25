@@ -195,9 +195,6 @@ Future<VM2<String, String>> _makeRealProfileTask(
   if (realPatchConfig.sniMimic.isNotEmpty) {
     rawConfig['sni-mimic'] = realPatchConfig.sniMimic;
   }
-  if (realPatchConfig.sniMitm) {
-    rawConfig['sni-mitm'] = true;
-  }
   // Cealing-Host native rules: [domains, fakeSNI, ip] triples that fake the
   // SNI and pin the destination at the same time.
   if (realPatchConfig.cealingRules.isNotEmpty) {

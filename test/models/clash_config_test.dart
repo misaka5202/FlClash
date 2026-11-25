@@ -5,7 +5,6 @@ void main() {
   group('PatchClashConfig SNI fields', () {
     test('defaults are empty', () {
       expect(defaultClashConfig.sniMimic, isEmpty);
-      expect(defaultClashConfig.sniMitm, isFalse);
       expect(defaultClashConfig.cealingRules, isEmpty);
     });
 
@@ -24,17 +23,14 @@ void main() {
           ],
         ],
         'sni-mimic': {'pixiv.net': 'fanbox.cc'},
-        'sni-mitm': true,
       };
       final config = PatchClashConfig.fromJson(json);
       expect(config.cealingRules, hasLength(2));
       expect(config.sniMimic, {'pixiv.net': 'fanbox.cc'});
-      expect(config.sniMitm, isTrue);
 
       final encoded = config.toJson();
       expect(encoded['cealing-rules'], json['cealing-rules']);
       expect(encoded['sni-mimic'], json['sni-mimic']);
-      expect(encoded['sni-mitm'], isTrue);
     });
 
     test('a null fake SNI survives encoding as null', () {

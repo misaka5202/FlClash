@@ -575,7 +575,6 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     ExternalControllerStatus externalController,
     @Default({}) Map<String, String> hosts,
     @Default({}) @JsonKey(name: 'sni-mimic') Map<String, String> sniMimic,
-    @Default(false) @JsonKey(name: 'sni-mitm') bool sniMitm,
     @Default(<Object?>[])
     @JsonKey(name: 'cealing-rules')
     List<Object?> cealingRules,

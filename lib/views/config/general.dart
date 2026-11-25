@@ -516,33 +516,6 @@ class SniMimicItem extends ConsumerWidget {
   }
 }
 
-class SniMitmItem extends ConsumerWidget {
-  const SniMitmItem({super.key});
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final sniMitm = ref.watch(
-      patchClashConfigProvider.select((state) => state.sniMitm),
-    );
-    return ListItem.switchItem(
-      leading: const Icon(Icons.security_outlined),
-      title: const Text('SNI MITM'),
-      subtitle: const Text('Re-sign leaf certs so apps skip cert errors'),
-      delegate: SwitchDelegate(
-        value: sniMitm,
-        onChanged: (bool value) async {
-          ref
-              .read(patchClashConfigProvider.notifier)
-              .update((state) => state.copyWith(sniMitm: value));
-          ref
-              .read(setupActionProvider.notifier)
-              .applyProfileDebounce(force: true);
-        },
-      ),
-    );
-  }
-}
-
 class SniMimicImportItem extends ConsumerWidget {
   const SniMimicImportItem({super.key});
 
@@ -679,7 +652,7 @@ class SniCertInstallItem extends ConsumerWidget {
         final certPath = '$home/sni-mitm/root.crt';
         if (!await File(certPath).exists()) {
           if (context.mounted) {
-            context.showSnackBar('证书未生成：请先在 SNI Mimic 中添加规则并应用');
+            context.showSnackBar('证书未生成：请先导入规则并等待配置生效');
           }
           return;
         }
@@ -964,7 +937,6 @@ final generalItems = <Widget>[
   const SniMimicItem(),
   const CealingRulesItem(),
   const SniMimicImportItem(),
-  const SniMitmItem(),
   const SniCertInstallItem(),
   const Ipv6Item(),
   const AllowLanItem(),

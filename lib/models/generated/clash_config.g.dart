@@ -450,7 +450,6 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as String),
           ) ??
           const {},
-      sniMitm: json['sni-mitm'] as bool? ?? false,
       cealingRules:
           json['cealing-rules'] as List<dynamic>? ?? const <Object?>[],
       geoAutoUpdate: json['geo-auto-update'] as bool? ?? false,
@@ -481,7 +480,6 @@ Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
       'hosts': instance.hosts,
       'sni-mimic': instance.sniMimic,
-      'sni-mitm': instance.sniMitm,
       'cealing-rules': instance.cealingRules,
       'geo-auto-update': instance.geoAutoUpdate,
       'geo-update-interval': instance.geoUpdateInterval,
