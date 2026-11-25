@@ -13,7 +13,6 @@ import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 part 'generated/action.g.dart';
 
@@ -62,51 +61,6 @@ class CommonAction extends _$CommonAction {
     ref.read(trafficsProvider.notifier).addTraffic(traffic);
     ref.read(totalTrafficProvider.notifier).value = await coreController
         .getTotalTraffic(onlyStatisticsProxy);
-  }
-
-  Future<void> autoCheckUpdate() async {
-    if (!ref.read(appSettingProvider).autoCheckUpdate) return;
-    final res = await request.checkForUpdate();
-    checkUpdateResultHandle(data: res);
-  }
-
-  Future<void> checkUpdateResultHandle({
-    Map<String, dynamic>? data,
-    bool isUser = false,
-  }) async {
-    if (data != null) {
-      final tagName = data['tag_name'];
-      final body = data['body'];
-      final submits = utils.parseReleaseBody(body);
-      final context = globalState.navigatorKey.currentContext!;
-      final textTheme = context.textTheme;
-      final res = await globalState.showMessage(
-        title: currentAppLocalizations.discoverNewVersion,
-        message: TextSpan(
-          text: '$tagName \n',
-          style: textTheme.headlineSmall,
-          children: [
-            TextSpan(text: '\n', style: textTheme.bodyMedium),
-            for (final submit in submits)
-              TextSpan(text: '- $submit \n', style: textTheme.bodyMedium),
-          ],
-        ),
-        confirmText: currentAppLocalizations.goDownload,
-        cancelText: isUser ? null : currentAppLocalizations.noLongerRemind,
-      );
-      if (res == true) {
-        launchUrl(Uri.parse('https://github.com/$repository/releases/latest'));
-      } else if (!isUser && res == false) {
-        ref
-            .read(appSettingProvider.notifier)
-            .update((state) => state.copyWith(autoCheckUpdate: false));
-      }
-    } else if (isUser) {
-      globalState.showMessage(
-        title: currentAppLocalizations.checkUpdate,
-        message: TextSpan(text: currentAppLocalizations.checkUpdateError),
-      );
-    }
   }
 }
 

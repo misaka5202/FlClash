@@ -445,6 +445,14 @@ _PatchClashConfig _$PatchClashConfigFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as String),
           ) ??
           const {},
+      sniMimic:
+          (json['sni-mimic'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+      sniMitm: json['sni-mitm'] as bool? ?? false,
+      cealingRules:
+          json['cealing-rules'] as List<dynamic>? ?? const <Object?>[],
       geoAutoUpdate: json['geo-auto-update'] as bool? ?? false,
       geoUpdateInterval: (json['geo-update-interval'] as num?)?.toInt() ?? 24,
     );
@@ -472,6 +480,9 @@ Map<String, dynamic> _$PatchClashConfigToJson(_PatchClashConfig instance) =>
       'external-controller':
           _$ExternalControllerStatusEnumMap[instance.externalController]!,
       'hosts': instance.hosts,
+      'sni-mimic': instance.sniMimic,
+      'sni-mitm': instance.sniMitm,
+      'cealing-rules': instance.cealingRules,
       'geo-auto-update': instance.geoAutoUpdate,
       'geo-update-interval': instance.geoUpdateInterval,
     };

@@ -554,7 +554,7 @@ class SniMimicImportItem extends ConsumerWidget {
     return ListItem.open(
       leading: const Icon(Icons.playlist_add_outlined),
       title: const Text('批量导入 SNI 规则'),
-      subtitle: const Text('粘贴多行「域名 别名」，结果合并到现有列表'),
+      subtitle: const Text('粘贴多行「域名 别名」，仅改 SNI；整包规则请用上面的 Cealing 导入'),
       delegate: OpenDelegate(
         blur: false,
         widget: EditorPage(
@@ -566,10 +566,11 @@ class SniMimicImportItem extends ConsumerWidget {
               context.showSnackBar('未解析到有效规则（格式：域名 别名）');
               return;
             }
-            ref.read(patchClashConfigProvider.notifier).update(
-                  (state) => state.copyWith(
-                    sniMimic: {...state.sniMimic, ...parsed},
-                  ),
+            ref
+                .read(patchClashConfigProvider.notifier)
+                .update(
+                  (state) =>
+                      state.copyWith(sniMimic: {...state.sniMimic, ...parsed}),
                 );
             ref
                 .read(setupActionProvider.notifier)
@@ -581,6 +582,87 @@ class SniMimicImportItem extends ConsumerWidget {
       ),
     );
   }
+}
+
+class CealingRulesItem extends ConsumerWidget {
+  const CealingRulesItem({super.key});
+
+  Future<void> _save(
+    BuildContext context,
+    WidgetRef ref,
+    String content,
+  ) async {
+    var text = content.trim();
+    if (text.isEmpty) {
+      _applyCealingRules(ref, const []);
+      if (!context.mounted) {
+        return;
+      }
+      context.showSnackBar('已清空 Cealing 规则');
+      Navigator.of(context).pop();
+      return;
+    }
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      final fetched = await request.getText(text);
+      if (fetched == null || fetched.trim().isEmpty) {
+        if (context.mounted) {
+          context.showSnackBar('下载失败，请检查网络或改用粘贴');
+        }
+        return;
+      }
+      text = fetched.trim();
+    }
+    final imported = parseCealingRules(text);
+    if (imported == null) {
+      if (context.mounted) {
+        context.showSnackBar('未识别：需要 Cealing-Host JSON 或一个 raw 链接');
+      }
+      return;
+    }
+    final rules = mergeCealingRules(
+      ref.read(patchClashConfigProvider).cealingRules,
+      imported,
+    );
+    _applyCealingRules(ref, rules);
+    if (!context.mounted) {
+      return;
+    }
+    context.showSnackBar('已导入，当前共 ${rules.length} 条');
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(
+      patchClashConfigProvider.select((state) => state.cealingRules),
+    );
+    return ListItem.open(
+      leading: const Icon(Icons.bolt_outlined),
+      title: const Text('导入 Cealing-Host 规则'),
+      subtitle: Text(
+        current.isEmpty
+            ? '粘贴 Cealing-Host JSON 或其 raw 链接，SNI 与解析 IP 同时生效'
+            : '已加载 ${current.length} 条，清空文本后保存即可移除',
+      ),
+      delegate: OpenDelegate(
+        blur: false,
+        widget: EditorPage(
+          title: '导入 Cealing-Host 规则',
+          content: current.isEmpty ? '' : encodeCealingRules(current),
+          onSave: (context, _, content) async {
+            await _save(context, ref, content);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+void _applyCealingRules(WidgetRef ref, List<Object?> rules) {
+  ref
+      .read(patchClashConfigProvider.notifier)
+      .update((state) => state.copyWith(cealingRules: rules));
+  ref.read(setupActionProvider.notifier).applyProfileDebounce(force: true);
 }
 
 class SniCertInstallItem extends ConsumerWidget {
@@ -604,10 +686,12 @@ class SniCertInstallItem extends ConsumerWidget {
         ProcessResult result;
         try {
           if (system.isWindows) {
-            result = await Process.run(
-              'certutil',
-              ['-addstore', '-user', 'Root', certPath],
-            );
+            result = await Process.run('certutil', [
+              '-addstore',
+              '-user',
+              'Root',
+              certPath,
+            ]);
           } else if (system.isMacOS) {
             final homeDir = Platform.environment['HOME'] ?? '';
             result = await Process.run('security', [
@@ -878,6 +962,7 @@ final generalItems = <Widget>[
   const PortItem(),
   const HostsItem(),
   const SniMimicItem(),
+  const CealingRulesItem(),
   const SniMimicImportItem(),
   const SniMitmItem(),
   const SniCertInstallItem(),

@@ -576,6 +576,9 @@ abstract class PatchClashConfig with _$PatchClashConfig {
     @Default({}) Map<String, String> hosts,
     @Default({}) @JsonKey(name: 'sni-mimic') Map<String, String> sniMimic,
     @Default(false) @JsonKey(name: 'sni-mitm') bool sniMitm,
+    @Default(<Object?>[])
+    @JsonKey(name: 'cealing-rules')
+    List<Object?> cealingRules,
     @Default(false) @JsonKey(name: 'geo-auto-update') bool geoAutoUpdate,
     @Default(24) @JsonKey(name: 'geo-update-interval') int geoUpdateInterval,
   }) = _PatchClashConfig;
